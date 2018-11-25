@@ -58,5 +58,7 @@ if __name__ == '__main__':
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
             pub.publish('call_received', currentCall.number)
+            if currentCall.number in blacklist:
+                modem_pipe.send('hangup')
         
         time.sleep(0.1) # keep from using all of the CPU handling messages from other thread

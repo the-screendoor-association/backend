@@ -54,6 +54,7 @@ def modem_process(pipe):
     while True:
         rx = modem.readline()
         if rx == 'RING\r\n' and state == 'idle':
+            logging.info('Incoming call...')
             state = 'wait_cid'
         elif rx[0:4] == 'DATE' and state == 'wait_cid':
             state = 'rx_cid'
@@ -65,6 +66,8 @@ def modem_process(pipe):
         elif rx[0:4] == 'DDN_':
             currentCall.number = rx[10:-2]
             state = 'wait_decision'
+            logging.info('Call received from ' + currentCall.number)
+            logging.debug('Waiting for decision...')
             pipe.send(currentCall)
             
             cmd = pipe.recv()
