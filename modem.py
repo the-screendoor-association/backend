@@ -1,4 +1,5 @@
 import serial
+import logging
 
 # '\r\n'
 # 'RING\r\n'
@@ -64,22 +65,9 @@ def modem_process(pipe):
         elif rx[0:4] == 'DDN_':
             currentCall.number = rx[10:-2]
             state = 'wait_decision'
-            break
+            pipe.send(currentCall)
             
-    print currentCall.date, currentCall.time
-    print currentCall.number
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+            cmd = pipe.recv()
+            if cmd == 'hangup':
+                modem.write('ATA\r') # 'aggressive' hangup
+                state = 'idle'
