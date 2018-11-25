@@ -1,14 +1,7 @@
 import gnsq
 import logging
 import multiprocessing
-
-# topics backend listens for:
-#  - call_blacklist
-#  - call_whitelist
-#  - history_get
-#  - settings_request_all
-#  - setting_get
-#  - setting_set
+import settings
 
 backend_conn = None
 backend_lock = None
@@ -18,7 +11,13 @@ def handler_process(pipe):
     backend_conn = pipe
     backend_lock = multiprocessing.Lock()
     
-    logging.debug('Establishing subscriptions to NSQ topics...')
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    logger.debug('Establishing subscriptions to NSQ topics...')
+    logging.getLogger('gnsq').setLevel(logging.INFO)
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    
     cb_reader = gnsq.Reader('call_blacklist', 'backend_py', '127.0.0.1:4150')
     cw_reader = gnsq.Reader('call_whitelist', 'backend_py', '127.0.0.1:4150')
     hg_reader = gnsq.Reader('history_get', 'backend_py', '127.0.0.1:4150')
@@ -26,13 +25,13 @@ def handler_process(pipe):
     sg_reader = gnsq.Reader('setting_get', 'backend_py', '127.0.0.1:4150')
     ss_reader = gnsq.Reader('setting_set', 'backend_py', '127.0.0.1:4150')
     
-    logging.debug('Wiring event handlers...')
+    logger.debug('Wiring event handlers...')
     
     @cb_reader.on_message.connect
     def call_blacklist_handler(reader, message):
         number = message.body.split(':')[0]
         if len(a) == 10: number = '1' + number # canonicalize 10 digit number into 1 + 10digits
-        logging.info('Blacklisting ' + number + '...')
+        logger.info('Blacklisting ' + number + '...')
     
         backend_lock.acquire()
         backend_conn.send('B' + number)
@@ -42,7 +41,7 @@ def handler_process(pipe):
     def call_whitelist_handler(reader, message):
         number = message.body.split(':')[0]
         if len(a) == 10: number = '1' + number
-        logging.info('Whitelisting ' + number + '...')
+        logger.info('Whitelisting ' + number + '...')
     
         backend_lock.acquire()
         backend_conn.send('W' + number)
@@ -50,21 +49,21 @@ def handler_process(pipe):
 
     @hg_reader.on_message.connect
     def history_get_handler(reader, message):
-        logging.warning('Call history handler stubbed out! Message: ' + message.body)
+        logger.warning('Call history handler stubbed out! Message: ' + message.body)
     
     @sr_reader.on_message.connect
     def settings_request_handler(reader, message):
-        logging.warning('Settings request stubbed out! Message: ' + message.body)
+        logger.warning('Settings request stubbed out! Message: ' + message.body)
 
     @sg_reader.on_message.connect
     def setting_get_handler(reader, message):
-        logging.warning('Setting get request stubbed out! Message: ' + message.body)
+        logger.warning('Setting get request stubbed out! Message: ' + message.body)
     
     @ss_reader.on_message.connect
     def setting_set_handler(reader, message):
-        logging.warning('Setting set request stubbed out! Message: ' + message.body)
+        logger.warning('Setting set request stubbed out! Message: ' + message.body)
     
-    logging.debug('Starting readers...')
+    logger.debug('Starting readers...')
     cb_reader.start(block=False)
     cw_reader.start(block=False)
     hg_reader.start(block=False)

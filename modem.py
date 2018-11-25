@@ -1,6 +1,8 @@
 import serial
 import logging
+import settings
 
+# sample modem traffic for an incoming call:
 # '\r\n'
 # 'RING\r\n'
 # '\r\n'
@@ -48,13 +50,16 @@ def modem_init():
         
 def modem_process(pipe):
     modem = modem_init()
-    state = 'idle'
     currentCall = None
+    state = 'idle'
+    
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
     
     while True:
         rx = modem.readline()
         if rx == 'RING\r\n' and state == 'idle':
-            logging.info('Incoming call...')
+            logger.debug('Incoming call, waiting for CID...')
             state = 'wait_cid'
         elif rx[0:4] == 'DATE' and state == 'wait_cid':
             state = 'rx_cid'
@@ -66,11 +71,21 @@ def modem_process(pipe):
         elif rx[0:4] == 'DDN_':
             currentCall.number = rx[10:-2]
             state = 'wait_decision'
-            logging.info('Call received from ' + currentCall.number)
-            logging.debug('Waiting for decision...')
+            logger.info('Call received from ' + currentCall.number)
+            logger.debug('Waiting for decision...')
             pipe.send(currentCall)
+            
+            # TODO: at some point we need to timeout for when the user picks up a call or calling party aborts call
             
             cmd = pipe.recv()
             if cmd == 'hangup':
-                modem.write('ATA\r') # 'aggressive' hangup
+                logger.debug('Hanging up call...')
+                modem.write('ATA\r') # begin 'aggressive' hangup
+                resp = ''
+                while resp != 'NO CARRIER\r\n': # wait for hangup to finish
+                    resp = modem.readline()
+                
+                # call has been hung up, return to idle
+                logger.debug('Hangup complete, return to idle')
+                currentCall = None
                 state = 'idle'

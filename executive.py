@@ -2,8 +2,8 @@ from multiprocessing import Process, Pipe
 import logging
 import os
 import time
-import handlers, modem
 import gnsq
+import handlers, modem, settings
 
 blacklist = set([])
 whitelist = set([])
@@ -26,23 +26,27 @@ def load_whitelist(path):
 # TODO: add settings load
 
 if __name__ == '__main__':
-    logging.basicConfig(format='[%(levelname)s] %(asctime)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
+    currentCall = None
+    logging.basicConfig(format='[%(levelname)s %(name)s] %(asctime)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                         level=logging.DEBUG)
-    logging.debug('Loading blacklist...')
+    logger = logging.getLogger('executive')
+    logger.setLevel(logging.DEBUG)
+
+    logger.debug('Loading blacklist...')
     load_blacklist('.')
     
-    logging.debug('Loading whitelist...')
+    logger.debug('Loading whitelist...')
     load_whitelist('.')
     
-    logging.debug('Establishing pub connection to NSQ...')
+    logger.debug('Establishing pub connection to NSQ...')
     pub = gnsq.Nsqd(address='localhost', http_port=4151)
     
-    logging.debug('Spinning up NSQ handler thread...')
+    logger.debug('Spinning up NSQ handler thread...')
     handler_pipe, handler_child_pipe = Pipe()
     handler_proc = Process(target=handlers.handler_process, args=(handler_child_pipe,))
     handler_proc.start()
     
-    logging.debug('Spinning up modem thread...')
+    logger.debug('Spinning up modem thread...')
     modem_pipe, modem_child_pipe = Pipe()
     modem_proc = Process(target=modem.modem_process, args=(modem_child_pipe,))
     modem_proc.start()
@@ -52,6 +56,8 @@ if __name__ == '__main__':
             msg = handler_pipe.recv()
             if msg[0] == 'B': # append number to blacklist
                 blacklist.add(msg[1:])
+                if currentCall is not None: # blacklist currently incoming call
+                    modem_pipe.send('hangup')
             elif msg[0] == 'W': # append number to whitelist
                 whitelist.add(msg[1:])
                 
@@ -60,5 +66,6 @@ if __name__ == '__main__':
             pub.publish('call_received', currentCall.number)
             if currentCall.number in blacklist:
                 modem_pipe.send('hangup')
+                currentCall = None
         
-        time.sleep(0.1) # keep from using all of the CPU handling messages from other thread
+        time.sleep(0.1) # keep from using all of the CPU handling messages from threads
