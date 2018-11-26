@@ -28,6 +28,7 @@ def handler_process(pipe):
     
     @cb_reader.on_message.connect
     def call_blacklist_handler(reader, message):
+        # received message: number:name
         number = message.body.split(':')[0]
         if len(a) == 10: number = '1' + number # canonicalize 10 digit number into 1 + 10digits
         logger.info('Blacklisting ' + number + '...')
@@ -38,6 +39,7 @@ def handler_process(pipe):
     
     @cw_reader.on_message.connect
     def call_whitelist_handler(reader, message):
+        # received message: number:name
         number = message.body.split(':')[0]
         if len(a) == 10: number = '1' + number
         logger.info('Whitelisting ' + number + '...')

@@ -56,9 +56,10 @@ def modem_process(pipe):
             state = 'wait_cid'
         elif rx[0:4] == 'DATE' and state == 'wait_cid':
             state = 'rx_cid'
-            currentCall = screendoor.ReceivedCall(date=rx[-6:-2])
+            dateStr = settings.s['year'] + rx[-6:-2]
+            currentCall = screendoor.Call(datetime=datestr)
         elif rx[0:4] == 'TIME':
-            currentCall.time = rx[-6:-2]
+            currentCall.datetime += 'T' + rx[-6:-2]
         elif rx[0:4] == 'NAME':
             currentCall.name = rx[7:-2]
         elif rx[0:4] == 'DDN_':

@@ -32,7 +32,7 @@ def restore_history(path):
         for h in list(hfile):
             # datetime;name;number
             sc = h.rstrip().split(';')
-            history.append(screendoor.StoredCall(datetime=sc[0], name=sc[1], number=sc[2]))
+            history.append(screendoor.Call(datetime=sc[0], name=sc[1], number=sc[2]))
             
     print 'Restored history:'     
     for h in history: print str(h)
@@ -43,11 +43,11 @@ def restore_history(path):
 # TODO: add wildcarding rules
 # TODO: add settings load
 
-if __name__ == '__main__':
+def start():
     currentCall = None
     logging.basicConfig(format='[%(levelname)s %(name)s] %(asctime)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
                         level=logging.DEBUG)
-    logger = logging.getLogger('executive')
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
     logger.debug('Loading blacklist...')
@@ -85,18 +85,15 @@ if __name__ == '__main__':
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
+
+            history.append(currentCall)
+            hfile.write(str(currentCall) + '\n')
             
-            storedCall = screendoor.StoredCall(name=currentCall.name, number=currentCall.number)
-            storedCall.datetime = '2018' + currentCall.date + 'T' + currentCall.time + '00'
-            history.append(storedCall)
-            hfile.write(str(storedCall) + '\n')
-            # for debugging only
-            for h in history:
-                print str(h)
-            
-            pub.publish('call_received', currentCall.number)
+            pub.publish('call_received', currentCall.number + ':' + currentCall.name)
             if currentCall.number in blacklist:
                 modem_pipe.send('hangup')
                 currentCall = None
+                
+            # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         
         time.sleep(0.05) # keep from using all of the CPU handling messages from threads
