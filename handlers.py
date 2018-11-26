@@ -16,7 +16,6 @@ def handler_process(pipe):
 
     logger.debug('Establishing subscriptions to NSQ topics...')
     logging.getLogger('gnsq').setLevel(logging.INFO)
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
     
     cb_reader = gnsq.Reader('call_blacklist', 'backend_py', '127.0.0.1:4150')
     cw_reader = gnsq.Reader('call_whitelist', 'backend_py', '127.0.0.1:4150')

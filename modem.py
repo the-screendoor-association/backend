@@ -1,6 +1,6 @@
 import serial
 import logging
-import settings
+import settings, screendoor
 
 # sample modem traffic for an incoming call:
 # '\r\n'
@@ -16,13 +16,6 @@ import settings
 # 'RING\r\n'
 
 ok = 'OK\r\n'
-
-class ReceivedCall:
-    def __init__(self, date=None, time=None, name=None, number=None):
-        self.date = date
-        self.time = time
-        self.name = name
-        self.number = number
         
 def modem_init():
     modem = serial.Serial('/dev/ttyACM0', 115200)
@@ -63,7 +56,7 @@ def modem_process(pipe):
             state = 'wait_cid'
         elif rx[0:4] == 'DATE' and state == 'wait_cid':
             state = 'rx_cid'
-            currentCall = ReceivedCall(date=rx[-6:-2])
+            currentCall = screendoor.ReceivedCall(date=rx[-6:-2])
         elif rx[0:4] == 'TIME':
             currentCall.time = rx[-6:-2]
         elif rx[0:4] == 'NAME':
