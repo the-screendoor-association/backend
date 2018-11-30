@@ -32,14 +32,26 @@ def restore_history(path):
         for h in list(hfile):
             # datetime;name;number
             sc = h.rstrip().split(';')
-            history.append(screendoor.Call(datetime=sc[0], name=sc[1], number=sc[2]))
+            history.append(screendoor.Call(datetime=sc[2], name=sc[1], number=sc[0]))
             
     print 'Restored history:'     
     for h in history: print str(h)
     
     hfile = open(histpath, 'a')
     return hfile
-            
+    
+def history_to_str(paramsList):
+    # nsq sent as strings so coerce to int to perform arithmetic
+    numItems = int(paramsList[0])
+    offset = int(paramsList[1])
+    
+    histSlice = history[offset:offset+numItems]
+    numReturned = len(histSlice)
+    
+    returnStr = ':'.join([str(numReturned), str(offset)]) + ':'
+    returnStr += ':'.join(str(h) for h in histSlice) # hist is a Call object but we need a str
+    
+    return returnStr
 # TODO: add wildcarding rules
 # TODO: add settings load
 
@@ -84,10 +96,14 @@ def start():
             elif msg[0] == 'whitelist': # append number to whitelist
                 whitelist.add(msg[1])
                 
+            elif msg[0] == 'history':
+                resp = history_to_str(msg[1])
+                pub.publish('history_give', resp)
+                
             elif msg[0] == 'settings_request': # respond to all settings request
                 setList = sorted([s['name'] for s in settings.registry.values()])
                 pub.publish('settings_all', ':'.join(setList))
-            elif msg[0] == 'setting_get': # respond to single setting request
+            #elif msg[0] == 'setting_get': # respond to single setting request
                 # resp = msg[1] # start with setting name
 #                 resp += settings.registry[msg[1]]
                 

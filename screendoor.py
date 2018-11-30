@@ -7,7 +7,7 @@ class Call:
         self.number = number
         
     def __str__(self):
-        return ';'.join([self.datetime, self.name, self.number])
+        return ';'.join([self.number, self.name, self.datetime])
 
 if __name__ == '__main__':
     executive.start()

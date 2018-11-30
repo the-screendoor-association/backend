@@ -50,7 +50,10 @@ def handler_process(pipe):
 
     @hg_reader.on_message.connect
     def history_get_handler(reader, message):
-        logger.warning('Call history handler stubbed out! Message: ' + message.body)
+        params = message.body.split(':')
+        backend_lock.acquire()
+        backend_conn.send(['history', params])
+        backend_lock.release()
     
     # request for all settings
     @sr_reader.on_message.connect
