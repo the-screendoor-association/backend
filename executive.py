@@ -45,7 +45,11 @@ def history_to_str(paramsList):
     numItems = int(paramsList[0])
     offset = int(paramsList[1])
     
-    histSlice = history[offset:offset+numItems]
+    # TODO: this is a horrible way to reverse the list, but it beats mutating global state... refactor
+    localHist = history
+    localHist.reverse()
+    
+    histSlice = localHist[offset:offset+numItems]
     numReturned = len(histSlice)
     
     returnStr = ':'.join([str(numReturned), str(offset)]) + ':'
@@ -70,6 +74,9 @@ def start():
     
     logger.debug('Restoring call history...')
     hfile = restore_history('.')
+    
+    logger.debug('Loading settings...')
+    settings.load_settings()
     
     logger.debug('Establishing pub connection to NSQ...')
     pub = gnsq.Nsqd(address='localhost', http_port=4151)
