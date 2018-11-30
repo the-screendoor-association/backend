@@ -1,11 +1,19 @@
+import json
+
 # INTERNAL CONSTANTS
-log_msg_fmt = '[%(levelname)s %(name)s] %(asctime)s: %(message)s'
-log_time_fmt = '%Y-%m-%d %H:%M:%S'
-nsq_protocol = 'v1.3'
+nsq_protocol = 'v1.3.1'
 
 # INTERNAL SETTINGS
-
-
+path_settings = './settings.json'
 
 # USER SETTINGS
-s = {'year': '2018'}
+registry = {}
+
+def load_settings():
+    with open(path_settings, 'r') as sfile:
+        global registry
+        registry = json.load(sfile)
+        
+def save_settings():
+    with open(path_settings, 'w') as sfile:
+        json.dump(registry, sfile)

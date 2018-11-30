@@ -34,7 +34,7 @@ def handler_process(pipe):
         logger.info('Blacklisting ' + number + '...')
     
         backend_lock.acquire()
-        backend_conn.send('B' + number)
+        backend_conn.send(['blacklist', number])
         backend_lock.release()
     
     @cw_reader.on_message.connect
@@ -45,21 +45,28 @@ def handler_process(pipe):
         logger.info('Whitelisting ' + number + '...')
     
         backend_lock.acquire()
-        backend_conn.send('W' + number)
+        backend_conn.send(['whitelist', number])
         backend_lock.release()
 
     @hg_reader.on_message.connect
     def history_get_handler(reader, message):
         logger.warning('Call history handler stubbed out! Message: ' + message.body)
     
+    # request for all settings
     @sr_reader.on_message.connect
     def settings_request_handler(reader, message):
-        logger.warning('Settings request stubbed out! Message: ' + message.body)
-
+        backend_lock.acquire()
+        backend_conn.send(['settings_request'])
+        backend_lock.release()
+    
+    # request to get one setting
     @sg_reader.on_message.connect
     def setting_get_handler(reader, message):
-        logger.warning('Setting get request stubbed out! Message: ' + message.body)
+        backend_lock.acquire()
+        backend_conn.send(['setting_get', message.body])
+        backend_lock.release()
     
+    # request to set one setting
     @ss_reader.on_message.connect
     def setting_set_handler(reader, message):
         logger.warning('Setting set request stubbed out! Message: ' + message.body)

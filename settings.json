@@ -1,0 +1,20 @@
+{
+"wildcards": {
+    "name": "Wildcards",
+    "help_text": "Enable or disable wildcard rules.", 
+    "states": ["Enabled", "Disabled"], 
+    "current_state": "Enabled"
+}, 
+"hangup_mode": {
+    "name": "Hangup mode",
+    "help_text": "How aggressively to hang up a blacklisted call.\nStandard: hangs up the call without sending any audio back.\nAggressive: hangs up the call using a modem handshaking sequence.",
+    "states": ["Standard", "Aggressive"], 
+    "current_state": "Aggressive"
+}, 
+"year": {
+    "name": "Calendar year",
+    "help_text": "The current calendar year", 
+    "states": ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"], 
+    "current_state": "2018"
+}
+}

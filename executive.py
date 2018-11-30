@@ -76,12 +76,20 @@ def start():
     while True:
         if handler_pipe.poll(): # message from NSQ
             msg = handler_pipe.recv()
-            if msg[0] == 'B': # append number to blacklist
-                blacklist.add(msg[1:])
+            logger.debug('Message from NSQ: ' + str(msg))
+            if msg[0] == 'blacklist': # append number to blacklist
+                blacklist.add(msg[1])
                 if currentCall is not None: # blacklist currently incoming call
                     modem_pipe.send('hangup')
-            elif msg[0] == 'W': # append number to whitelist
-                whitelist.add(msg[1:])
+            elif msg[0] == 'whitelist': # append number to whitelist
+                whitelist.add(msg[1])
+                
+            elif msg[0] == 'settings_request': # respond to all settings request
+                setList = sorted([s['name'] for s in settings.registry.values()])
+                pub.publish('settings_all', ':'.join(setList))
+            elif msg[0] == 'setting_get': # respond to single setting request
+                # resp = msg[1] # start with setting name
+#                 resp += settings.registry[msg[1]]
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
