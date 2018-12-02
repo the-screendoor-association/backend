@@ -6,6 +6,8 @@ import settings
 backend_conn = None
 backend_lock = None
 
+# TODO: refactor more of the message parsing logic out of executive and into here
+
 def handler_process(pipe):
     global backend_conn, backend_lock
     backend_conn = pipe
@@ -72,7 +74,10 @@ def handler_process(pipe):
     # request to set one setting
     @ss_reader.on_message.connect
     def setting_set_handler(reader, message):
-        logger.warning('Setting set request stubbed out! Message: ' + message.body)
+        backend_lock.acquire()
+        alteredSetting = message.body.split(':')
+        backend_conn.send(['setting_set', alteredSetting[0], alteredSetting[1]]) # setting, new state
+        backend_lock.release()
     
     logger.debug('Starting readers...')
     cb_reader.start(block=False)

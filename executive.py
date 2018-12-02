@@ -52,12 +52,12 @@ def history_to_str(paramsList):
     histSlice = localHist[offset:offset+numItems]
     numReturned = len(histSlice)
     
-    returnStr = ':'.join([str(numReturned), str(offset)]) + ':'
+    returnStr = ':'.join([str(numReturned), str(offset), ''])
     returnStr += ':'.join(str(h) for h in histSlice) # hist is a Call object but we need a str
     
     return returnStr
+
 # TODO: add wildcarding rules
-# TODO: add settings load
 
 def start():
     currentCall = None
@@ -108,11 +108,17 @@ def start():
                 pub.publish('history_give', resp)
                 
             elif msg[0] == 'settings_request': # respond to all settings request
-                setList = sorted([s['name'] for s in settings.registry.values()])
+                setList = sorted(settings.registry.keys())
                 pub.publish('settings_all', ':'.join(setList))
-            #elif msg[0] == 'setting_get': # respond to single setting request
-                # resp = msg[1] # start with setting name
-#                 resp += settings.registry[msg[1]]
+            elif msg[0] == 'setting_get': # respond to single setting request
+                setObj = settings.registry[msg[1]] # single setting requested
+                allStates = ';'.join(setObj['states']) # str for all possible states
+                
+                respList = [msg[1], setObj['help_text'], setObj['current_state'], allStates]
+                resp = ':'.join(respList)
+                pub.publish('setting_give', resp)
+            elif msg[0] == 'setting_set': # change the setting
+                settings.registry[msg[1]]['current_state'] = msg[2]
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
