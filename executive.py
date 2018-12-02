@@ -126,10 +126,12 @@ def start():
             history.append(currentCall)
             hfile.write(str(currentCall) + '\n')
             
-            pub.publish('call_received', currentCall.number + ':' + currentCall.name)
             if currentCall.number in blacklist:
                 modem_pipe.send('hangup')
                 currentCall = None
+            else:
+                #pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                pub.publish('call_received', currentCall.name + ':' + currentCall.number)
                 
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         
