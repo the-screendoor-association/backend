@@ -56,14 +56,15 @@ def modem_process(pipe):
             state = 'wait_cid'
         elif rx[0:4] == 'DATE' and state == 'wait_cid':
             state = 'rx_cid'
-            dateStr = settings.s['year'] + rx[-6:-2]
-            currentCall = screendoor.Call(datetime=datestr)
+            year = settings.registry['Calendar year']['current_state']
+            dateStr = year + rx[-6:-2] # month day
+            currentCall = screendoor.Call(datetime=dateStr)
         elif rx[0:4] == 'TIME':
             currentCall.datetime += 'T' + rx[-6:-2]
         elif rx[0:4] == 'NAME':
             currentCall.name = rx[7:-2]
         elif rx[0:4] == 'DDN_':
-            currentCall.number = rx[10:-2]
+            currentCall.number = screendoor.canonicalize(rx[10:-2])
             state = 'wait_decision'
             logger.info('Call received from ' + currentCall.number)
             logger.debug('Waiting for decision...')
