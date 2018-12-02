@@ -62,7 +62,8 @@ def modem_process(pipe):
         elif rx[0:4] == 'TIME':
             currentCall.datetime += 'T' + rx[-6:-2]
         elif rx[0:4] == 'NAME':
-            currentCall.name = rx[7:-2]
+            if rx[7:-2] != 'O': currentCall.name = rx[7:-2]
+            else: currentCall.name = 'Unknown name'
         elif rx[0:4] == 'DDN_':
             currentCall.number = screendoor.canonicalize(rx[10:-2])
             state = 'wait_decision'
