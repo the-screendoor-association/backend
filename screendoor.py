@@ -8,6 +8,9 @@ class Call:
         
     def __str__(self):
         return ';'.join([self.number, self.name, self.datetime])
+    
+    def __repr__(self):
+        return ';'.join([self.number, self.name, self.datetime])
         
 def canonicalize(number):
     if len(number) == 10: number = '1' + number

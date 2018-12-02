@@ -53,7 +53,7 @@ def history_to_str(paramsList):
     numReturned = len(histSlice)
     
     returnStr = ':'.join([str(numReturned), str(offset), ''])
-    returnStr += ':'.join(str(h) for h in histSlice) # hist is a Call object but we need a str
+    returnStr += ':'.join([str(h) for h in histSlice]) # hist is a Call object but we need a str
     
     return returnStr
 
