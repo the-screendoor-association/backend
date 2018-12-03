@@ -15,7 +15,12 @@ def load_blacklist(path):
     blpath = os.path.join(path, 'blacklist.txt')
     with open(blpath, 'r') as bfile:
         for line in bfile:
-            blacklist.add(line.rstrip())
+            blacklist.add(screendoor.canonicalize(line.rstrip()))
+            
+def save_blacklist(num):
+    blpath = 'blacklist.txt'
+    with open(blpath, 'a') as bfile:
+        bfile.write(num + '\n')
             
 # load whitelist from file
 def load_whitelist(path):
@@ -46,7 +51,7 @@ def history_to_str(paramsList):
     offset = int(paramsList[1])
     
     # TODO: this is a horrible way to reverse the list, but it beats mutating global state... refactor
-    localHist = history
+    localHist = history[:] # make a shallow copy to avoid reversing the actual history list
     localHist.reverse()
     
     histSlice = localHist[offset:offset+numItems]
@@ -100,6 +105,7 @@ def start():
                 blacklist.add(msg[1])
                 if currentCall is not None: # blacklist currently incoming call
                     modem_pipe.send('hangup')
+                save_blacklist(msg[1])
             elif msg[0] == 'whitelist': # append number to whitelist
                 whitelist.add(msg[1])
                 
