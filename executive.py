@@ -1,50 +1,94 @@
+# executive.py: core logic for the Screendoor backend.
+
 from multiprocessing import Process, Pipe
 import logging
 import os
 import time
 import datetime
 import gnsq
+import fnmatch
 import handlers, modem, settings, screendoor
 
+# See https://stackoverflow.com/a/17945009.
+# Blacklist and whitelist are stored as sets because the "object-is-in" operation is faster with a set than a list.
 blacklist = set([])
 whitelist = set([])
-history = []
-    
-# load blacklist from file
-def load_blacklist(path):
-    blpath = os.path.join(path, 'blacklist.txt')
-    with open(blpath, 'r') as bfile:
+# History is stored as a list because lists are faster to iterate over than sets.
+history = [] # oldest to newest
+# Wildcards are stored as a regular expression. See restore_wildcards().
+wildcard_rule = ''
+
+### IO METHODS
+def load_blacklist():
+    """
+    Load blacklisted numbers from blacklist.txt.
+    Modifies the global blacklist set.
+    """
+    with open(screendoor.path_blacklist, 'r') as bfile:
         for line in bfile:
             blacklist.add(screendoor.canonicalize(line.rstrip()))
-            
-def save_blacklist(num):
-    blpath = 'blacklist.txt'
-    with open(blpath, 'a') as bfile:
-        bfile.write(num + '\n')
-            
-# load whitelist from file
-def load_whitelist(path):
-    wlpath = os.path.join(path, 'whitelist.txt')
-    with open(wlpath, 'r') as wfile:
+
+def load_whitelist():
+    """
+    Load whitelisted numbers from whitelist.txt.
+    Modifies the global whitelist set.
+    """
+    with open(screendoor.path_whitelist, 'r') as wfile:
         for line in wfile:
             whitelist.add(line.rstrip())
-            
-# load history from file
-def restore_history(path):
-    histpath = os.path.join(path, 'history.txt')
-    with open(histpath, 'r') as hfile:
+
+def restore_wildcards():
+    """
+    Load wildcard rules from wildcards.txt.  
+    Modifies the global wildcard regex.
+    """
+    wildcards = []
+    with open(screendoor.path_wildcards, 'r') as wfile:
+        global wildcards
+        for line in list(wfile):
+            wildcards.append(line.rstrip())
+
+    # now that we have a list of wildcards, compile into a single regex
+    global wildcard_rule
+    for w in wildcards:
+        # each wildcard is in UNIX shell format. translate it to a regex, group it, and add an OR to chain rules together.
+        clause = '({0})|'.format(fnmatch.translate(w))
+        wildcard_rule += clause
+    wildcard_rule = wildcard_rule[:-1] # get rid of extraneous OR at the end (artifact of iteration)
+
+def restore_history():
+    """
+    Load call history from history.txt.  
+    Modifies the global history list.
+    """
+    with open(screendoor.path_history, 'r') as hfile:
         global history
         for h in list(hfile):
             # datetime;name;number
             sc = h.rstrip().split(';')
             history.append(screendoor.Call(datetime=sc[2], name=sc[1], number=sc[0]))
-            
-    print 'Restored history:'     
-    for h in history: print str(h)
-    
-    hfile = open(histpath, 'a')
-    return hfile
-    
+
+def append_blacklist(num):
+    """
+    Appends a blacklisted number to blacklist.txt.
+
+    :param num: string with blacklisted number to append
+    """
+    with open(screendoor.path_blacklist, 'a') as bfile:
+        bfile.write(num + '\n')
+
+def append_history(call):
+    """
+    Appends a call to the global history list and history.txt.
+    Modifies the global history list.
+
+    :param call: Call object to append
+    """
+    history.append(call)
+    with open(screendoor.path_history, 'a') as hfile:
+        hfile.write(str(call) + '\n')
+
+### OTHER HELPER METHODS
 def history_to_str(paramsList):
     # nsq sent as strings so coerce to int to perform arithmetic
     numItems = int(paramsList[0])
@@ -62,7 +106,14 @@ def history_to_str(paramsList):
     
     return returnStr
 
-# TODO: add wildcarding rules
+def matches_wildcard(num):
+    """
+    Determines whether a number matches a wildcard in the wildcard list.
+
+    :param num: string with number to match
+    :returns: True if number matches a rule, False otherwise
+    """
+    return re.match(wildcard_rule, num) is not None
 
 def start():
     currentCall = None
@@ -128,11 +179,10 @@ def start():
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
-
-            history.append(currentCall)
-            hfile.write(str(currentCall) + '\n')
             
-            if currentCall.number in blacklist:
+            append_history(currentCall)
+            
+            if (currentCall.number in blacklist) or (matches_wildcard(currentCall.number)):
                 modem_pipe.send('hangup')
                 currentCall = None
             else:
