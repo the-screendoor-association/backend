@@ -136,8 +136,7 @@ def start():
                 modem_pipe.send('hangup')
                 currentCall = None
             else:
-                #pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                pub.publish('call_received', currentCall.name + ':' + currentCall.number)
+                pub.publish('call_received', currentCall.number + ':' + currentCall.name)
                 
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         
