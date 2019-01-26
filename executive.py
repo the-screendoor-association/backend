@@ -6,7 +6,7 @@ import os
 import time
 import datetime
 import gnsq
-import fnmatch
+import fnmatch, re
 import handlers, modem, settings, screendoor
 
 # See https://stackoverflow.com/a/17945009.
@@ -44,7 +44,6 @@ def restore_wildcards():
     """
     wildcards = []
     with open(screendoor.path_wildcards, 'r') as wfile:
-        global wildcards
         for line in list(wfile):
             wildcards.append(line.rstrip())
 
@@ -123,13 +122,17 @@ def start():
     logger.setLevel(logging.DEBUG)
 
     logger.debug('Loading blacklist...')
-    load_blacklist('.')
+    load_blacklist()
     
     logger.debug('Loading whitelist...')
-    load_whitelist('.')
+    load_whitelist()
     
     logger.debug('Restoring call history...')
-    hfile = restore_history('.')
+    restore_history()
+
+    logger.debug('Restoring wildcard rules...')
+    restore_wildcards()
+    logger.debug('Wildcard rule: ' + wildcard_rule)
     
     logger.debug('Loading settings...')
     settings.load_settings()
@@ -156,7 +159,7 @@ def start():
                 blacklist.add(msg[1])
                 if currentCall is not None: # blacklist currently incoming call
                     modem_pipe.send('hangup')
-                save_blacklist(msg[1])
+                append_blacklist(msg[1])
             elif msg[0] == 'whitelist': # append number to whitelist
                 whitelist.add(msg[1])
                 
@@ -187,6 +190,8 @@ def start():
                 currentCall = None
             else:
                 pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
                 
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         

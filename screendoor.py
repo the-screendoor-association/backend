@@ -1,4 +1,5 @@
 # screendoor.py: core classes, methods, internal variables, and bootstrap code.
+import os
 
 # INTERNAL PATHS
 runtime = '/opt/screendoor/runtime'
