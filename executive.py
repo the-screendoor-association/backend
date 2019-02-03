@@ -184,15 +184,26 @@ def start():
             currentCall = modem_pipe.recv()
             
             append_history(currentCall)
-            
-            if (currentCall.number in blacklist) or (matches_wildcard(currentCall.number)):
-                modem_pipe.send('hangup')
-                currentCall = None
-            else:
-                pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-                
+            mode = settings.registry['List Mode']['current_state'] 
+            if (mode == 'Blacklist'):
+                if (currentCall.number in blacklist) or (matches_wildcard(currentCall.number)):
+                    modem_pipe.send('hangup')
+                    currentCall = None
+                else:
+                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+            else if (mode == 'Whitelist'):
+                if (currentCall.number in whitelist):
+                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+                else:
+                    modem_pipe.send('hangup')
+                    currentCall = None
+            else: # is in Greylist mode, can check, but just assuming for now
+                currentCall = None # TODO: add greylist functionality
+
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         
         time.sleep(0.05) # keep from using all of the CPU handling messages from threads
