@@ -10,16 +10,17 @@ path_settings = os.path.join(runtime, 'settings.json')
 path_history = os.path.join(runtime, 'history.txt')
 
 class Call:
-    def __init__(self, datetime=None, name=None, number=None):
+    def __init__(self, datetime=None, name=None, number=None, wasBlocked='0'):
         self.datetime = datetime
         self.name = name
         self.number = number
+        self.wasBlocked = wasBlocked
         
     def __str__(self):
-        return ';'.join([self.number, self.name, self.datetime])
+        return ';'.join([self.number, self.name, self.datetime, self.wasBlocked])
     
     def __repr__(self):
-        return ';'.join([self.number, self.name, self.datetime])
+        return ';'.join([self.number, self.name, self.datetime, self.wasBlocked])
         
 def canonicalize(number):
     if len(number) == 10: number = '1' + number
