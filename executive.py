@@ -65,7 +65,8 @@ def restore_history():
         for h in list(hfile):
             # datetime;name;number
             sc = h.rstrip().split(';')
-            history.append(screendoor.Call(datetime=sc[2], name=sc[1], number=sc[0]))
+            history.append(screendoor.Call(datetime=sc[2], name=sc[1], number=sc[0],
+                wasBlocked=sc[3]))
 
 def append_blacklist(num):
     """
