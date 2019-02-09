@@ -98,8 +98,10 @@ def handler_process(pipe):
     
     logger.debug('Starting readers...')
     cb_reader.start(block=False)
+    br_reader.start(block=False)
     cw_reader.start(block=False)
     hg_reader.start(block=False)
+    bg_reader.start(block=False)
     sr_reader.start(block=False)
     sg_reader.start(block=False)
     ss_reader.start() # keep the process running by blocking
