@@ -77,6 +77,16 @@ def append_blacklist(num):
     with open(screendoor.path_blacklist, 'a') as bfile:
         bfile.write(num + '\n')
 
+def write_blacklist():
+    """
+    Rewrites blacklist to blacklist.txt
+
+    :param num: string with blacklisted number to append
+    """
+    with open(screendoor.path_blacklist, 'w') as bfile:
+        bfile.write('\n'.join([b for b in blacklist]))
+        bfile.write('\n')
+
 def append_history(call):
     """
     Appends a call to the global history list and history.txt.
@@ -103,6 +113,22 @@ def history_to_str(paramsList):
     
     returnStr = ':'.join([str(numReturned), str(offset), ''])
     returnStr += ':'.join([str(h) for h in histSlice]) # hist is a Call object but we need a str
+    
+    return returnStr
+
+def blacklist_to_str(paramsList):
+    # nsq sent as strings so coerce to int to perform arithmetic
+    numItems = int(paramsList[0])
+    offset = int(paramsList[1])
+    
+    localBlacklist = list(blacklist) # copy blacklist set to a list (for indexing purposes)
+    localBlacklist.sort() # sort list blacklist (to keep indexes the same across calls)
+    
+    blacklistSlice = localBlacklist[offset:offset+numItems]
+    numReturned = len(blacklistSlice)
+    
+    returnStr = ':'.join([str(numReturned), str(offset), ''])
+    returnStr += ';'.join([b for b in blacklistSlice]) # numbers in blacklist are str, so join them direclty
     
     return returnStr
 
@@ -157,16 +183,27 @@ def start():
             msg = handler_pipe.recv()
             logger.debug('Message from NSQ: ' + str(msg))
             if msg[0] == 'blacklist': # append number to blacklist
-                blacklist.add(msg[1])
-                if currentCall is not None: # blacklist currently incoming call
-                    modem_pipe.send('hangup')
-                append_blacklist(msg[1])
+                if msg[1] not in blacklist: # don't add duplicates
+                    blacklist.add(msg[1])
+                    if currentCall is not None: # blacklist currently incoming call
+                        modem_pipe.send('hangup')
+                    append_blacklist(msg[1])
+
+            elif msg[0] == 'blacklist_remove':
+                if msg[1] in blacklist: # don't do expensive file rewrite if number wasn't in blacklist
+                    blacklist.remove(msg[1])
+                    write_blacklist() # rewrite blacklist file to reflect removed number
+
             elif msg[0] == 'whitelist': # append number to whitelist
                 whitelist.add(msg[1])
                 
             elif msg[0] == 'history':
                 resp = history_to_str(msg[1])
                 pub.publish('history_give', resp)
+                
+            elif msg[0] == 'blacklist_get':
+                resp = blacklist_to_str(msg[1])
+                pub.publish('blacklist_give', resp)
                 
             elif msg[0] == 'settings_request': # respond to all settings request
                 setList = sorted(settings.registry.keys())
