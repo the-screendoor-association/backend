@@ -1,4 +1,9 @@
 {
+"Filtering mode": {
+    "help_text": "Whether to use Blacklist Mode, Whitelist Mode, or Greylist Mode (not yet supported).",
+    "states": ["Blacklist", "Whitelist", "Greylist"],
+    "current_state": "Blacklist"
+},
 "Wildcards": {
     "help_text": "Enable or disable wildcard rules.", 
     "states": ["Enabled", "Disabled"], 

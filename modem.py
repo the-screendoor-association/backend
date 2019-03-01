@@ -61,17 +61,23 @@ def modem_process(pipe):
             currentCall = screendoor.Call(datetime=dateStr)
         elif rx[0:4] == 'TIME':
             currentCall.datetime += 'T' + rx[-6:-2]
+        # TODO: refactor to be more generic
+        # This works with Hillsborough CenturyLink CID.
+        #elif rx[0:4] == 'DDN_':
+        #    currentCall.number = screendoor.canonicalize(rx[10:-2])
+        # This works with phone line simulator.
+        elif rx[0:4] == 'NMBR':
+            currentCall.number = screendoor.canonicalize(rx[7:-2])
         elif rx[0:4] == 'NAME':
             if rx[7:-2] != 'O': currentCall.name = rx[7:-2]
             else: currentCall.name = 'Unknown name'
-        elif rx[0:4] == 'DDN_':
-            currentCall.number = screendoor.canonicalize(rx[10:-2])
+            # this goes under NMBR when CenturyLink is in use
             state = 'wait_decision'
             logger.info('Call received from ' + currentCall.number)
             logger.debug('Waiting for decision...')
             pipe.send(currentCall)
-            
-            # TODO: at some point we need to timeout for when the user picks up a call or calling party aborts call
+
+            # TODO: need to timeout for when the user picks up a call or calling party aborts call
             
             cmd = pipe.recv()
             if cmd == 'hangup':
@@ -83,5 +89,10 @@ def modem_process(pipe):
                 
                 # call has been hung up, return to idle
                 logger.debug('Hangup complete, return to idle')
+                currentCall = None
+                state = 'idle'
+            # this is a quick hack to circumvent some fragility and prepare for CDR. need a better way.
+            elif cmd == 'pass':
+                logger.debug('Returning to wait state...')
                 currentCall = None
                 state = 'idle'
