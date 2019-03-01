@@ -7,7 +7,7 @@ import time
 import datetime
 import gnsq
 import fnmatch, re
-import handlers, modem, settings, screendoor
+import handlers, modem, settings, screendoor, relay
 
 # See https://stackoverflow.com/a/17945009.
 # Blacklist and whitelist are stored as sets because the "object-is-in" operation is faster with a set than a list.
@@ -178,6 +178,8 @@ def start():
     modem_proc = Process(target=modem.modem_process, args=(modem_child_pipe,))
     modem_proc.start()
     
+    init_relay_gpio()
+
     while True:
         if handler_pipe.poll(): # message from NSQ
             msg = handler_pipe.recv()
