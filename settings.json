@@ -18,5 +18,10 @@
     "help_text": "The current calendar year", 
     "states": ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"], 
     "current_state": "2018"
+},
+"Display Timeout": {
+    "help_text": "The time of inactivity in seconds before the screen turns off",
+    "states": ["5", "10", "15", "30", "60", "120"],
+    "current_state": "30"
 }
 }
