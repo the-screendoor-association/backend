@@ -18,5 +18,10 @@
     "help_text": "The current calendar year", 
     "states": ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"], 
     "current_state": "2018"
+},
+"Off-device programming": {
+    "help_text": "Append to or replace current lists with those from usb device",
+    "states": ["Cancel", "Append", "Replace"],
+    "current_state": "Cancel"
 }
 }

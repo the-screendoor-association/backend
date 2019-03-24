@@ -7,7 +7,7 @@ import time
 import datetime
 import gnsq
 import fnmatch, re
-import handlers, modem, settings, screendoor, relay
+import handlers, modem, settings, screendoor, relay, off_device
 
 # See https://stackoverflow.com/a/17945009.
 # Blacklist and whitelist are stored as sets because the "object-is-in" operation is faster with a set than a list.
@@ -218,7 +218,15 @@ def start():
                 resp = ':'.join(respList)
                 pub.publish('setting_give', resp)
             elif msg[0] == 'setting_set': # change the setting
-                settings.registry[msg[1]]['current_state'] = msg[2]
+                # special treatment of off-device programming setting
+                if msg[1] == 'Off-device programming' and msg[2] != 'Cancel':
+                    if partition = off_device.mount_device():
+                        if msg[2] == 'Append':
+                            off_device.append_lists(partition)
+                        elif msg[2] == 'Replace':
+                            off_device.replace_lists(partition)
+                else:
+                    settings.registry[msg[1]]['current_state'] = msg[2]
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
