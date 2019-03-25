@@ -19,6 +19,11 @@
     "states": ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"], 
     "current_state": "2018"
 },
+"Off-device programming": {
+    "help_text": "Append to or replace current lists with those from usb device",
+    "states": ["Cancel", "Append", "Replace"],
+    "current_state": "Cancel"
+},
 "Display timeout": {
     "help_text": "The time of inactivity in seconds before the screen turns off",
     "states": ["5", "10", "15", "30", "60", "120"],
