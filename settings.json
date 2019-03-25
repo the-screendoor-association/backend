@@ -10,7 +10,7 @@
     "current_state": "Enabled"
 }, 
 "Hangup mode": {
-    "help_text": "How aggressively to hang up a blacklisted call.\nStandard: hangs up the call without sending any audio back.\nAggressive: hangs up the call using a modem handshaking sequence.",
+    "help_text": "How aggressively to hang up a blacklisted call.\nStandard- hangs up the call without sending any audio back.\nAggressive- hangs up the call using a modem handshaking sequence.",
     "states": ["Standard", "Aggressive"], 
     "current_state": "Aggressive"
 }, 
@@ -23,5 +23,10 @@
     "help_text": "Append to or replace current lists with those from usb device",
     "states": ["Cancel", "Append", "Replace"],
     "current_state": "Cancel"
+},
+"Display timeout": {
+    "help_text": "The time of inactivity in seconds before the screen turns off",
+    "states": ["5", "10", "15", "30", "60", "120"],
+    "current_state": "30"
 }
 }
