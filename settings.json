@@ -20,8 +20,8 @@
     "current_state": "2018"
 },
 "Off-device programming": {
-    "help_text": "Append to or replace current lists with those from usb drive, or copy lists from device to usb drive",
-    "states": ["Cancel", "Append", "Replace", "Copy"],
+    "help_text": "Append to or replace current lists with those from usb drive, or export lists from device to usb drive",
+    "states": ["Cancel", "Append", "Replace", "Export"],
     "current_state": "Cancel"
 },
 "Display timeout": {
