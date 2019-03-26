@@ -5,6 +5,7 @@ import executive, screendoor
 
 MOUNT_PATH = '/mnt'
 PARTION_FILE_PATH = '/proc/partitions'
+USB_DRIVE_PARTITION_MARKER_FILE = 'screendoor.sdp'
 
 def mount_device():
     parts = []
@@ -16,8 +17,7 @@ def mount_device():
                 parts.append(name)
     for part in parts:
         os.system('mount /dev/{} {}'.format(part, MOUNT_PATH))
-        for listfile in ['blacklist.txt', 'whitelist.txt', 'wildcards.txt']:
-            if os.path.isfile('{}/{}'.format(MOUNT_PATH, listfile)):
+        if os.path.isfile('{}/{}'.format(MOUNT_PATH, USB_DRIVE_PARTITION_MARKER_FILE)):
                 return part
         os.system('umount /dev/{}'.format(part))
     return None
@@ -36,6 +36,7 @@ def append_lists(partition):
                 for line in rfile.readlines():
                     afile.write(line)
     os.system('umount /dev/{}'.format(partition))
+    reload_lists()
 
 def replace_lists(partition):
     allfiles = {'{}/blacklist.txt'.format(MOUNT_PATH):screendoor.path_blacklist,
@@ -51,6 +52,16 @@ def replace_lists(partition):
                 for line in rfile.readlines():
                     wfile.write(line)
     os.system('umount /dev/{}'.format(partition))
+    reload_lists()
+
+def copy_lists(partition):
+    filelist = {screendoor.path_blacklist:'{}/blacklist.txt'.format(MOUNT_PATH),
+            screendoor.path_whitelist:'{}/whitelist.txt'.format(MOUNT_PATH),
+            screendoor.path_wildcards:'{}/wildcards.txt'.format(MOUNT_PATH)}
+    for listfile in filelist:
+        os.system('cp {} {}'.format(listfile, filelist[listfile]))
+    os.system('umount /dev/{}'.format(partition))
+        
 
 def reload_lists():
     executive.load_blacklist()
