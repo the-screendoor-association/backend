@@ -225,6 +225,8 @@ def start():
                             off_device.append_lists(partition)
                         elif msg[2] == 'Replace':
                             off_device.replace_lists(partition)
+                        elif msg[2] == 'Copy':
+                            off_device.copy_lists(partition)
                 else:
                     settings.registry[msg[1]]['current_state'] = msg[2]
                 
