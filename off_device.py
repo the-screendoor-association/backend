@@ -1,6 +1,8 @@
 # off_device.py: logic for off-device programming
 
 import os
+import string
+import re
 import executive, screendoor
 
 MOUNT_PATH = '/mnt'
@@ -25,10 +27,13 @@ def mount_device():
 def append_lists(partition):
     allfiles = {'{}/blacklist.txt'.format(MOUNT_PATH):screendoor.path_blacklist,
             '{}/whitelist.txt'.format(MOUNT_PATH):screendoor.path_whitelist,
-            '{}/wildcards.txt'.format(MOUNT_PATH):screendoor.path_wildcards, } 
+            '{}/wildcards.txt'.format(MOUNT_PATH):screendoor.path_wildcards} 
+    file_verification = {'{}/blacklist.txt'.format(MOUNT_PATH):verify_list,
+            '{}/whitelist.txt'.format(MOUNT_PATH):verify_list,
+            '{}/wildcards.txt'.format(MOUNT_PATH):verify_wildcards} 
     existingfiles = {}
     for listfile in allfiles.keys():
-        if os.path.isfile(listfile):
+        if os.path.isfile(listfile) and file_verification[listfile](listfile):
             filelist[listfile] = allfiles[listfile]
     for listfile in existingfiles.keys():
         with open(existingfiles[listfile], 'a') as afile:
@@ -41,10 +46,13 @@ def append_lists(partition):
 def replace_lists(partition):
     allfiles = {'{}/blacklist.txt'.format(MOUNT_PATH):screendoor.path_blacklist,
             '{}/whitelist.txt'.format(MOUNT_PATH):screendoor.path_whitelist,
-            '{}/wildcards.txt'.format(MOUNT_PATH):screendoor.path_wildcards, } 
+            '{}/wildcards.txt'.format(MOUNT_PATH):screendoor.path_wildcards} 
+    file_verification = {'{}/blacklist.txt'.format(MOUNT_PATH):verify_list,
+            '{}/whitelist.txt'.format(MOUNT_PATH):verify_list,
+            '{}/wildcards.txt'.format(MOUNT_PATH):verify_wildcards} 
     existingfiles = {}
     for listfile in allfiles.keys():
-        if os.path.isfile(listfile):
+        if os.path.isfile(listfile) and file_verification[listfile](listfile):
             filelist[listfile] = allfiles[listfile]
     for listfile in existingfiles.keys():
         with open(existingfiles[listfile], 'w') as wfile:
@@ -67,4 +75,21 @@ def reload_lists():
     executive.load_blacklist()
     executive.load_whitelist()
     executive.restore_wildcards()
+
+def verify_list(listfile):
+    with open(listfile, 'r') as rfile:
+        for line in rfile:
+            for char in line.strip():
+                if char not in string.digits:
+                    return False
+    return True
+
+def verify_wildcards(wildfile):
+    with open(wildfile, 'r') as rfile:
+        for line in rfile:
+            try:
+                re.match(line.rstrip(), '')
+            except re.error:
+                return False
+    return True
 
