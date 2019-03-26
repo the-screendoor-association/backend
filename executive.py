@@ -219,7 +219,7 @@ def start():
                 pub.publish('setting_give', resp)
             elif msg[0] == 'setting_set': # change the setting
                 # special treatment of off-device programming setting
-                if msg[1] == 'Off-device programming' and msg[2] != 'Cancel':
+                if msg[1] == 'Off-device programming':
                     if partition = off_device.mount_device():
                         if msg[2] == 'Append':
                             off_device.append_lists(partition)
