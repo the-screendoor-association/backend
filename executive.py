@@ -219,13 +219,13 @@ def start():
                 pub.publish('setting_give', resp)
             elif msg[0] == 'setting_set': # change the setting
                 # special treatment of off-device programming setting
-                if msg[1] == 'Off-device programming' and msg[2] != 'Cancel':
+                if msg[1] == 'Off-device programming':
                     if partition = off_device.mount_device():
                         if msg[2] == 'Append':
                             off_device.append_lists(partition)
                         elif msg[2] == 'Replace':
                             off_device.replace_lists(partition)
-                        elif msg[2] == 'Copy':
+                        elif msg[2] == 'Export':
                             off_device.copy_lists(partition)
                 else:
                     settings.registry[msg[1]]['current_state'] = msg[2]
