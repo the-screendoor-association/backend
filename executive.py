@@ -232,7 +232,7 @@ def start():
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
-            relay.set_ans_machine_relay_pin(True)
+            relay.set_ans_machine_relay_pin(False)
             relay.set_telephone_out_relay_pin(False)
             
             mode = settings.registry['Filtering mode']['current_state'] 
@@ -274,7 +274,7 @@ def start():
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
                 elif (matches_wildcard(currentCall.number)):
                     relay.set_ans_machine_relay_pin(True)
-                    relay.set_telephone_out_relay_pin(False)
+                    relay.set_telephone_out_relay_pin(True)
                     append_history(currentCall)
                     modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
