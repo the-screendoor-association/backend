@@ -15,7 +15,7 @@ def mount_device():
         for line in pf.readlines()[2:]:
             words = [word.strip() for word in line.split()]
             name = words[3]
-            if len(name) > 3 and name[:2] == 'sd':
+            if len(name) >= 3 and name[:2] == 'sd':
                 parts.append(name)
     for part in parts:
         os.system('mount /dev/{} {}'.format(part, MOUNT_PATH))
