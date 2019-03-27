@@ -15,7 +15,7 @@ def init_relay_gpio():
 def init_ans_machine_relay_pin():
     GPIO.setup(ANS_MACH_RELAY, GPIO.OUT)
     # Set to low as starting value
-    GPIO.output(ANS_MACH_RELAY, GPIO.LOW)
+    GPIO.output(ANS_MACH_RELAY, GPIO.HIGH)
 
 # Set answering machine relay pin
 # Accepts boolean: sets relay pin to high if TRUE, sets relay pin to low if FALSE
@@ -27,7 +27,7 @@ def set_ans_machine_relay_pin(set_high):
 def init_telephone_out_relay_pin():
     GPIO.setup(TELEPHONE_OUT_RELAY, GPIO.OUT)
     # Set to low as starting value
-    GPIO.output(TELEPHONE_OUT_RELAY, GPIO.HIGH)
+    GPIO.output(TELEPHONE_OUT_RELAY, GPIO.LOW)
 
 # Set telephone out relay pin
 # Accepts boolean: sets relay pin to high if TRUE, sets relay pin to low if FALSE
