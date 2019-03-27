@@ -269,7 +269,7 @@ def start():
                     currentCall = None
                 elif (currentCall.number in whitelist):
                     append_history(currentCall)
-                    pub.publish('call_recieved', currentCall.number + ':' + currentCall.name)
+                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
                     modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
                 elif (matches_wildcard(currentCall.number)):
@@ -280,7 +280,7 @@ def start():
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
                 else:
                     append_history(currentCall)
-                    pub.publish('call_recieved', currentCall.number + ':' + currentCall.name)
+                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
                     modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
 
