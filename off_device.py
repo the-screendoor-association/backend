@@ -18,10 +18,10 @@ def mount_device():
             if len(name) >= 3 and name[:2] == 'sd':
                 parts.append(name)
     for part in parts:
-        os.system('mount /dev/{} {}'.format(part, MOUNT_PATH))
+        os.system('sudo mount /dev/{} {}'.format(part, MOUNT_PATH))
         if os.path.isfile('{}/{}'.format(MOUNT_PATH, USB_DRIVE_PARTITION_MARKER_FILE)):
                 return part
-        os.system('umount /dev/{}'.format(part))
+        os.system('sudo umount /dev/{}'.format(part))
     return None
 
 def append_lists(partition):
@@ -40,7 +40,7 @@ def append_lists(partition):
             with open(listfile, 'r') as rfile:
                 for line in rfile.readlines():
                     afile.write(line)
-    os.system('umount /dev/{}'.format(partition))
+    os.system('sudo umount /dev/{}'.format(partition))
     reload_lists()
 
 def replace_lists(partition):
@@ -59,7 +59,7 @@ def replace_lists(partition):
             with open(listfile, 'r') as rfile:
                 for line in rfile.readlines():
                     wfile.write(line)
-    os.system('umount /dev/{}'.format(partition))
+    os.system('sudo umount /dev/{}'.format(partition))
     reload_lists()
 
 def copy_lists(partition):
@@ -68,7 +68,7 @@ def copy_lists(partition):
             screendoor.path_wildcards:'{}/wildcards.txt'.format(MOUNT_PATH)}
     for listfile in filelist:
         os.system('cp {} {}'.format(listfile, filelist[listfile]))
-    os.system('umount /dev/{}'.format(partition))
+    os.system('sudo umount /dev/{}'.format(partition))
         
 
 def reload_lists():
