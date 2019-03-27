@@ -178,7 +178,7 @@ def start():
     modem_proc = Process(target=modem.modem_process, args=(modem_child_pipe,))
     modem_proc.start()
     
-    init_relay_gpio()
+    relay.init_relay_gpio()
 
     while True:
         if handler_pipe.poll(): # message from NSQ
@@ -220,7 +220,7 @@ def start():
             elif msg[0] == 'setting_set': # change the setting
                 # special treatment of off-device programming setting
                 if msg[1] == 'Off-device programming':
-                    if partition = off_device.mount_device():
+                    if partition == off_device.mount_device():
                         if msg[2] == 'Append':
                             off_device.append_lists(partition)
                         elif msg[2] == 'Replace':
@@ -235,7 +235,7 @@ def start():
             relay.set_ans_machine_relay_pin(False)
             relay.set_telephone_out_relay_pin(True)
             
-            mode = settings.registry['List Mode']['current_state'] 
+            mode = settings.registry['Filtering mode']['current_state'] 
             if (mode == 'Blacklist'):
                 if (currentCall.number in blacklist) or (matches_wildcard(currentCall.number)):
                     currentCall.wasBlocked = '1'
