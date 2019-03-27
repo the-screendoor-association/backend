@@ -220,7 +220,8 @@ def start():
             elif msg[0] == 'setting_set': # change the setting
                 # special treatment of off-device programming setting
                 if msg[1] == 'Off-device programming':
-                    if partition == off_device.mount_device():
+                    partition = off_device.mount_device()
+                    if partition != None:
                         if msg[2] == 'Append':
                             off_device.append_lists(partition)
                         elif msg[2] == 'Replace':
