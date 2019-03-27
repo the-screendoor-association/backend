@@ -6,7 +6,7 @@ import re
 import executive, screendoor
 
 MOUNT_PATH = '/mnt'
-PARTION_FILE_PATH = '/proc/partitions'
+PARTITION_FILE_PATH = '/proc/partitions'
 USB_DRIVE_PARTITION_MARKER_FILE = 'screendoor.sdp'
 
 def mount_device():
