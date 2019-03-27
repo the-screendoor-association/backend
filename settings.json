@@ -21,7 +21,7 @@
 },
 "Off-device programming": {
     "help_text": "Append to or replace current lists with those from usb drive, or export lists from device to usb drive",
-    "states": ["Export", "Append", "Replace"],
+    "states": ["Append", "Replace"], // also have "Export" but doesn't work right now
     "current_state": "Cancel"
 },
 "Display timeout": {

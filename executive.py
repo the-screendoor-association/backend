@@ -24,7 +24,8 @@ def load_blacklist():
     Load blacklisted numbers from blacklist.txt.
     Modifies the global blacklist set.
     """
-    global blacklist = set([])
+    global blacklist 
+    blacklist = set([])
     with open(screendoor.path_blacklist, 'r') as bfile:
         for line in bfile:
             blacklist.add(screendoor.canonicalize(line.rstrip()))
@@ -34,7 +35,8 @@ def load_whitelist():
     Load whitelisted numbers from whitelist.txt.
     Modifies the global whitelist set.
     """
-    global whitelist = set([])
+    global whitelist
+    whitelist = set([])
     with open(screendoor.path_whitelist, 'r') as wfile:
         for line in wfile:
             whitelist.add(line.rstrip())
@@ -50,7 +52,8 @@ def restore_wildcards():
             wildcards.append(line.rstrip())
 
     # now that we have a list of wildcards, compile into a single regex
-    global wildcard_rule = ''
+    global wildcard_rule
+    wildcard_rule = ''
     for w in wildcards:
         # each wildcard is in UNIX shell format. translate it to a regex, group it, and add an OR to chain rules together.
         clause = '({0})|'.format(fnmatch.translate(w))
