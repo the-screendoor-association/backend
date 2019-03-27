@@ -34,7 +34,7 @@ def append_lists(partition):
     existingfiles = {}
     for listfile in allfiles.keys():
         if os.path.isfile(listfile) and file_verification[listfile](listfile):
-            filelist[listfile] = allfiles[listfile]
+            existingfiles[listfile] = allfiles[listfile]
     for listfile in existingfiles.keys():
         with open(existingfiles[listfile], 'a') as afile:
             with open(listfile, 'r') as rfile:
@@ -53,7 +53,7 @@ def replace_lists(partition):
     existingfiles = {}
     for listfile in allfiles.keys():
         if os.path.isfile(listfile) and file_verification[listfile](listfile):
-            filelist[listfile] = allfiles[listfile]
+            existingfiles[listfile] = allfiles[listfile]
     for listfile in existingfiles.keys():
         with open(existingfiles[listfile], 'w') as wfile:
             with open(listfile, 'r') as rfile:
