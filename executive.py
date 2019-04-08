@@ -4,7 +4,7 @@ from multiprocessing import Process, Pipe
 import logging
 import os
 import time
-import datetime
+from datetime import datetime
 import gnsq
 import fnmatch, re
 import handlers, modem, settings, screendoor, relay, off_device
@@ -182,7 +182,15 @@ def start():
     
     relay.init_relay_gpio()
 
+    pub.publish('heartbeat', 'no')
+    last_heartbeat_time = datetime.now()
+
     while True:
+        # heartbeat
+        if (datetime.now() - last_heartbeat_time).total_seconds() > 60:
+            pub.publish('heartbeat', 'no')
+            last_heartbeat_time = datetime.now()
+
         if handler_pipe.poll(): # message from NSQ
             msg = handler_pipe.recv()
             logger.debug('Message from NSQ: ' + str(msg))
