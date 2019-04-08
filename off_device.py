@@ -17,6 +17,15 @@ def mount_device():
             name = words[3]
             if len(name) >= 3 and name[:2] == 'sd':
                 parts.append(name)
+    subparts = []
+    for part in parts:
+        if len(part) == 3:
+            subparts.append(part)
+        else:
+            for subp in subparts:
+                if part.startswith(subp):
+                    parts.remove(subp)
+                    subparts.remove(subp)
     for part in parts:
         os.system('sudo mount /dev/{} {}'.format(part, MOUNT_PATH))
         if os.path.isfile('{}/{}'.format(MOUNT_PATH, USB_DRIVE_PARTITION_MARKER_FILE)):
