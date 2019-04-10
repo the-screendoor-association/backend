@@ -240,6 +240,7 @@ def start():
                             off_device.copy_lists(partition)
                 else:
                     settings.registry[msg[1]]['current_state'] = msg[2]
+                    settings.save_settings()
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
