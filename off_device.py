@@ -76,7 +76,7 @@ def copy_lists(partition):
             screendoor.path_whitelist:'{}/whitelist.txt'.format(MOUNT_PATH),
             screendoor.path_wildcards:'{}/wildcards.txt'.format(MOUNT_PATH)}
     for listfile in filelist:
-        os.system('sudp cp {} {}'.format(listfile, filelist[listfile]))
+        os.system('sudo cp {} {}'.format(listfile, filelist[listfile]))
     os.system('sudo umount /dev/{}'.format(partition))
         
 
