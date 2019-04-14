@@ -4,11 +4,6 @@
     "states": ["Blacklist", "Whitelist", "Greylist"],
     "current_state": "Blacklist"
 },
-"Wildcards": {
-    "help_text": "Enable or disable wildcard rules.", 
-    "states": ["Enabled", "Disabled"], 
-    "current_state": "Enabled"
-}, 
 "Hangup mode": {
     "help_text": "How aggressively to hang up a blacklisted call.\nStandard- hangs up the call without sending any audio back.\nAggressive- hangs up the call using a modem handshaking sequence.",
     "states": ["Standard", "Aggressive"], 

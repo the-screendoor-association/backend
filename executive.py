@@ -241,6 +241,11 @@ def start():
                             off_device.replace_lists(partition)
                         elif msg[2] == 'Export':
                             off_device.copy_lists(partition)
+                # special treatment of filter and wildcard settings
+                elif msg[1] == 'Filter Disable':
+                    settings.filter_disable = True if msg[2] == 'Enabled' else False
+                elif msg[1] == 'Wildcards':
+                    settings.wildcard_disable = True if msg[2] == 'Enabled' else False
                 else:
                     settings.registry[msg[1]]['current_state'] = msg[2]
                     settings.save_settings()
@@ -299,7 +304,7 @@ def start():
                     modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
 
-            pub.publish('history_give', history_to_str([10, 0])
+            pub.publish('history_give', history_to_str([10, 0]))
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         
         time.sleep(0.05) # keep from using all of the CPU handling messages from threads
