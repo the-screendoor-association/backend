@@ -4,7 +4,7 @@ from multiprocessing import Process, Pipe
 import logging
 import os
 import time
-import datetime
+from datetime import datetime
 import gnsq
 import fnmatch, re
 import handlers, modem, settings, screendoor, relay, off_device
@@ -185,7 +185,15 @@ def start():
     
     relay.init_relay_gpio()
 
+    pub.publish('heartbeat', 'no')
+    last_heartbeat_time = datetime.now()
+
     while True:
+        # heartbeat
+        if (datetime.now() - last_heartbeat_time).total_seconds() > 60:
+            pub.publish('heartbeat', 'no')
+            last_heartbeat_time = datetime.now()
+
         if handler_pipe.poll(): # message from NSQ
             msg = handler_pipe.recv()
             logger.debug('Message from NSQ: ' + str(msg))
@@ -235,6 +243,7 @@ def start():
                             off_device.copy_lists(partition)
                 else:
                     settings.registry[msg[1]]['current_state'] = msg[2]
+                    settings.save_settings()
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
@@ -290,6 +299,7 @@ def start():
                     modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
 
+            pub.publish('history_give', history_to_str([10, 0])
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
         
         time.sleep(0.05) # keep from using all of the CPU handling messages from threads
