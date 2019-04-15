@@ -63,8 +63,8 @@ def modem_process(pipe):
             currentCall.datetime += 'T' + rx[-6:-2]
         # TODO: refactor to be more generic
         # This works with Hillsborough CenturyLink CID.
-        #elif rx[0:4] == 'DDN_':
-        #    currentCall.number = screendoor.canonicalize(rx[10:-2])
+        elif rx[0:4] == 'DDN_':
+            currentCall.number = screendoor.canonicalize(rx[10:-2])
         # This works with phone line simulator.
         elif rx[0:4] == 'NMBR':
             currentCall.number = screendoor.canonicalize(rx[7:-2])
@@ -72,6 +72,7 @@ def modem_process(pipe):
             if rx[7:-2] != 'O': currentCall.name = rx[7:-2]
             else: currentCall.name = 'Unknown name'
             # this goes under NMBR when CenturyLink is in use
+        if currentCall.isFull():
             state = 'wait_decision'
             logger.info('Call received from ' + currentCall.number)
             logger.debug('Waiting for decision...')

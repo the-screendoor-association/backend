@@ -22,6 +22,11 @@ class Call:
     def __repr__(self):
         return ';'.join([self.number, self.name, self.datetime, self.wasBlocked])
         
+    def isFull(self):
+        if self.datetime == None || self.name == None || self.number == None:
+            return False
+        return True
+
 def canonicalize(number):
     if len(number) == 10: number = '1' + number
     return number # canonicalize 10 digit number into 1 + 10digits
