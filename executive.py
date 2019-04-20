@@ -255,54 +255,60 @@ def start():
             relay.set_ans_machine_relay_pin(False)
             relay.set_telephone_out_relay_pin(False)
             
-            mode = settings.registry['Filtering mode']['current_state'] 
-            if (mode == 'Blacklist'):
-                if (currentCall.number in blacklist) or (matches_wildcard(currentCall.number)):
-                    relay.set_telephone_out_relay_pin(True)
-                    currentCall.wasBlocked = '1'
-                    append_history(currentCall)
-                    modem_pipe.send('hangup')
-                    currentCall = None
-                else:
+            if settings.filter_disable:
                     append_history(currentCall)
                     pub.publish('call_received', currentCall.number + ':' + currentCall.name)
                     modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
                     currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-            elif (mode == 'Whitelist'):
-                if (currentCall.number in whitelist):
-                    append_history(currentCall)
-                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-                else:
-                    relay.set_telephone_out_relay_pin(True)
-                    currentCall.wasBlocked = '1'
-                    append_history(currentCall)
-                    modem_pipe.send('hangup')
-                    currentCall = None
-            else: # is in Greylist mode, can check, but just assuming for now
-                if (currentCall.number in blacklist):
-                    relay.set_telephone_out_relay_pin(True)
-                    currentCall.wasBlocked = '1'
-                    append_history(currentCall)
-                    modem_pipe.send('hangup')
-                    currentCall = None
-                elif (currentCall.number in whitelist):
-                    append_history(currentCall)
-                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-                elif (matches_wildcard(currentCall.number)):
-                    relay.set_ans_machine_relay_pin(True)
-                    relay.set_telephone_out_relay_pin(True)
-                    append_history(currentCall)
-                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-                else:
-                    append_history(currentCall)
-                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+            else:
+                mode = settings.registry['Filtering mode']['current_state'] 
+                if (mode == 'Blacklist'):
+                    if (currentCall.number in blacklist) or ((not settings.wildcard_disable) and matches_wildcard(currentCall.number)):
+                        relay.set_telephone_out_relay_pin(True)
+                        currentCall.wasBlocked = '1'
+                        append_history(currentCall)
+                        modem_pipe.send('hangup')
+                        currentCall = None
+                    else:
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                        currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+                elif (mode == 'Whitelist'):
+                    if (currentCall.number in whitelist):
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                        currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+                    else:
+                        relay.set_telephone_out_relay_pin(True)
+                        currentCall.wasBlocked = '1'
+                        append_history(currentCall)
+                        modem_pipe.send('hangup')
+                        currentCall = None
+                else: # is in Greylist mode, can check, but just assuming for now
+                    if (currentCall.number in blacklist):
+                        relay.set_telephone_out_relay_pin(True)
+                        currentCall.wasBlocked = '1'
+                        append_history(currentCall)
+                        modem_pipe.send('hangup')
+                        currentCall = None
+                    elif (currentCall.number in whitelist):
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                        currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+                    elif ((not settings.wildcard_disable) and matches_wildcard(currentCall.number)):
+                        relay.set_ans_machine_relay_pin(True)
+                        relay.set_telephone_out_relay_pin(True)
+                        append_history(currentCall)
+                        modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                        currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
+                    else:
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                        currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
 
             pub.publish('history_give', history_to_str([10, 0]))
             # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)

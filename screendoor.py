@@ -23,7 +23,7 @@ class Call:
         return ';'.join([self.number, self.name, self.datetime, self.wasBlocked])
         
     def isFull(self):
-        if self.datetime == None || self.name == None || self.number == None:
+        if self.datetime == None or self.name == None or self.number == None:
             return False
         return True
 
