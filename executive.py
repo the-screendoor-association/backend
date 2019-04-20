@@ -302,7 +302,7 @@ def start():
                         relay.set_ans_machine_relay_pin(True)
                         relay.set_telephone_out_relay_pin(True)
                         append_history(currentCall)
-                        modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
+                        modem_pipe.send('ans_machine') # this is a hack to get through demo; find better way to get around fragility
                         currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
                     else:
                         append_history(currentCall)

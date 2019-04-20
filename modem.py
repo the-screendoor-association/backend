@@ -1,6 +1,7 @@
 import serial
 import logging
-import settings, screendoor
+from datetime import datetime
+import settings, screendoor, relay
 
 # sample modem traffic for an incoming call:
 # '\r\n'
@@ -90,6 +91,22 @@ def modem_process(pipe):
                 
                 # call has been hung up, return to idle
                 logger.debug('Hangup complete, return to idle')
+                relay.set_telephone_out_relay_pin(False)
+                currentCall = None
+                state = 'idle'
+            if cmd == 'ans_machine':
+                logger.debug('Waiting for RINGs to end...')
+                last_ring_time = datetime.now()
+                modem.timeout = 5
+                while (datetime.now() - last_ring_time).total_seconds() < 5: # wait for no RINGs in the last 5 seconds
+                    resp = modem.readline()
+                    if resp == 'RING\r\n':
+                        last_ring_time = datetime.now()
+                
+                # RINGs have ended, reconnect telephone out and return to idle
+                logger.debug('RINGs have ended, reconnect telephone out and return to idle')
+                relay.set_telephone_out_relay_pin(False)
+                modem.timeout = None
                 currentCall = None
                 state = 'idle'
             # this is a quick hack to circumvent some fragility and prepare for CDR. need a better way.
