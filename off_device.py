@@ -11,6 +11,7 @@ USB_DRIVE_PARTITION_MARKER_FILE = 'screendoor.sdp'
 
 def mount_device():
     parts = []
+    # get names of all partitions and subpartitions
     with open(PARTITION_FILE_PATH, 'r') as pf:
         for line in pf.readlines()[2:]:
             words = [word.strip() for word in line.split()]
@@ -18,18 +19,24 @@ def mount_device():
             if len(name) >= 3 and name[:2] == 'sd':
                 parts.append(name)
     subparts = []
+    # get rid of names of partitions with subpartitions
     for part in parts:
+        # get names of partitions that may have subpartitions
         if len(part) == 3:
             subparts.append(part)
         else:
+            # if partition has subpartitions, remove name of overall partition from list of
+            # mountable partitions
             for subp in subparts:
                 if part.startswith(subp):
                     parts.remove(subp)
                     subparts.remove(subp)
+    # mount mountable partitions and check for marker file for partition to mount
     for part in parts:
         os.system('sudo mount /dev/{} {}'.format(part, MOUNT_PATH))
         if os.path.isfile('{}/{}'.format(MOUNT_PATH, USB_DRIVE_PARTITION_MARKER_FILE)):
-                return part
+            # return mounted partition to use for off-device programming
+            return part
         os.system('sudo umount /dev/{}'.format(part))
     return None
 
@@ -40,10 +47,12 @@ def append_lists(partition):
     file_verification = {'{}/blacklist.txt'.format(MOUNT_PATH):verify_list,
             '{}/whitelist.txt'.format(MOUNT_PATH):verify_list,
             '{}/wildcards.txt'.format(MOUNT_PATH):verify_wildcards} 
+    # generate list of number list files present on the mounted partition
     existingfiles = {}
     for listfile in allfiles.keys():
         if os.path.isfile(listfile) and file_verification[listfile](listfile):
             existingfiles[listfile] = allfiles[listfile]
+    # append contents of each file on mounted partition to corresponding local file
     for listfile in existingfiles.keys():
         with open(existingfiles[listfile], 'a') as afile:
             with open(listfile, 'r') as rfile:
@@ -59,10 +68,12 @@ def replace_lists(partition):
     file_verification = {'{}/blacklist.txt'.format(MOUNT_PATH):verify_list,
             '{}/whitelist.txt'.format(MOUNT_PATH):verify_list,
             '{}/wildcards.txt'.format(MOUNT_PATH):verify_wildcards} 
+    # generate list of number list files present on the mounted partition
     existingfiles = {}
     for listfile in allfiles.keys():
         if os.path.isfile(listfile) and file_verification[listfile](listfile):
             existingfiles[listfile] = allfiles[listfile]
+    # replace contents of each local file with contents of corresponding file on mounted partition
     for listfile in existingfiles.keys():
         with open(existingfiles[listfile], 'w') as wfile:
             with open(listfile, 'r') as rfile:
