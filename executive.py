@@ -4,7 +4,7 @@ from multiprocessing import Process, Pipe
 import logging
 import os
 import time
-import datetime
+from datetime import datetime
 import gnsq
 import fnmatch, re
 import handlers, modem, settings, screendoor, relay, off_device
@@ -24,6 +24,8 @@ def load_blacklist():
     Load blacklisted numbers from blacklist.txt.
     Modifies the global blacklist set.
     """
+    global blacklist 
+    blacklist = set([])
     with open(screendoor.path_blacklist, 'r') as bfile:
         for line in bfile:
             blacklist.add(screendoor.canonicalize(line.rstrip()))
@@ -33,6 +35,8 @@ def load_whitelist():
     Load whitelisted numbers from whitelist.txt.
     Modifies the global whitelist set.
     """
+    global whitelist
+    whitelist = set([])
     with open(screendoor.path_whitelist, 'r') as wfile:
         for line in wfile:
             whitelist.add(line.rstrip())
@@ -49,6 +53,7 @@ def restore_wildcards():
 
     # now that we have a list of wildcards, compile into a single regex
     global wildcard_rule
+    wildcard_rule = ''
     for w in wildcards:
         # each wildcard is in UNIX shell format. translate it to a regex, group it, and add an OR to chain rules together.
         clause = '({0})|'.format(fnmatch.translate(w))
@@ -178,9 +183,17 @@ def start():
     modem_proc = Process(target=modem.modem_process, args=(modem_child_pipe,))
     modem_proc.start()
     
-    init_relay_gpio()
+    relay.init_relay_gpio()
+
+    pub.publish('heartbeat', 'no')
+    last_heartbeat_time = datetime.now()
 
     while True:
+        # heartbeat
+        if (datetime.now() - last_heartbeat_time).total_seconds() > 60:
+            pub.publish('heartbeat', 'no')
+            last_heartbeat_time = datetime.now()
+
         if handler_pipe.poll(): # message from NSQ
             msg = handler_pipe.recv()
             logger.debug('Message from NSQ: ' + str(msg))
@@ -220,46 +233,83 @@ def start():
             elif msg[0] == 'setting_set': # change the setting
                 # special treatment of off-device programming setting
                 if msg[1] == 'Off-device programming':
-                    if partition = off_device.mount_device():
+                    partition = off_device.mount_device()
+                    if partition != None:
                         if msg[2] == 'Append':
                             off_device.append_lists(partition)
                         elif msg[2] == 'Replace':
                             off_device.replace_lists(partition)
                         elif msg[2] == 'Export':
                             off_device.copy_lists(partition)
+                # special treatment of filter and wildcard settings
+                elif msg[1] == 'Filter Disable':
+                    settings.filter_disable = True if msg[2] == 'Enabled' else False
+                elif msg[1] == 'Wildcards':
+                    settings.wildcard_disable = True if msg[2] == 'Enabled' else False
                 else:
                     settings.registry[msg[1]]['current_state'] = msg[2]
+                    settings.save_settings()
                 
         if modem_pipe.poll(): # incoming call from modem
             currentCall = modem_pipe.recv()
+            relay.set_ans_machine_relay_pin(False)
+            relay.set_telephone_out_relay_pin(False)
             
-            mode = settings.registry['List Mode']['current_state'] 
-            if (mode == 'Blacklist'):
-                if (currentCall.number in blacklist) or (matches_wildcard(currentCall.number)):
-                    currentCall.wasBlocked = '1'
-                    append_history(currentCall)
-                    modem_pipe.send('hangup')
-                    currentCall = None
-                else:
+            if settings.filter_disable:
                     append_history(currentCall)
                     pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-            elif (mode == 'Whitelist'):
-                if (currentCall.number in whitelist):
-                    append_history(currentCall)
-                    pub.publish('call_received', currentCall.number + ':' + currentCall.name)
-                    modem_pipe.send('pass') # this is a hack to get through demo; find better way to get around fragility
-                    currentCall = None # part of the above hack; breaks the ability to blacklist while a call is being received
-                else:
-                    currentCall.wasBlocked = '1'
-                    append_history(currentCall)
-                    modem_pipe.send('hangup')
+                    modem_pipe.send('pass')
                     currentCall = None
-            else: # is in Greylist mode, can check, but just assuming for now
-                append_history(currentCall)
-                currentCall = None # TODO: add greylist functionality
+            else:
+                mode = settings.registry['Filtering mode']['current_state'] 
+                if (mode == 'Blacklist'):
+                    if (currentCall.number in blacklist) or ((not settings.wildcard_disable) and matches_wildcard(currentCall.number)):
+                        relay.set_telephone_out_relay_pin(True)
+                        currentCall.wasBlocked = '1'
+                        append_history(currentCall)
+                        modem_pipe.send('hangup')
+                        currentCall = None
+                    else:
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass')
+                        currentCall = None
+                elif (mode == 'Whitelist'):
+                    if (currentCall.number in whitelist):
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass')
+                        currentCall = None
+                    else:
+                        relay.set_telephone_out_relay_pin(True)
+                        currentCall.wasBlocked = '1'
+                        append_history(currentCall)
+                        modem_pipe.send('hangup')
+                        currentCall = None
+                else: # is in Greylist mode; can check, but just assuming for now
+                    if (currentCall.number in blacklist):
+                        relay.set_telephone_out_relay_pin(True)
+                        currentCall.wasBlocked = '1'
+                        append_history(currentCall)
+                        modem_pipe.send('hangup')
+                        currentCall = None
+                    elif (currentCall.number in whitelist):
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass')
+                        currentCall = None
+                    elif ((not settings.wildcard_disable) and matches_wildcard(currentCall.number)):
+                        relay.set_ans_machine_relay_pin(True)
+                        relay.set_telephone_out_relay_pin(True)
+                        append_history(currentCall)
+                        modem_pipe.send('ans_machine')
+                        currentCall = None
+                    else:
+                        append_history(currentCall)
+                        pub.publish('call_received', currentCall.number + ':' + currentCall.name)
+                        modem_pipe.send('pass')
+                        currentCall = None
 
-            # TODO: set currentCall to none if call goes through/is aborted (when phone stops RINGing)
+            pub.publish('history_give', history_to_str([10, 0]))
         
         time.sleep(0.05) # keep from using all of the CPU handling messages from threads

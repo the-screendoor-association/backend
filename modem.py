@@ -1,6 +1,7 @@
 import serial
 import logging
-import settings, screendoor
+from datetime import datetime
+import settings, screendoor, relay
 
 # sample modem traffic for an incoming call:
 # '\r\n'
@@ -61,17 +62,14 @@ def modem_process(pipe):
             currentCall = screendoor.Call(datetime=dateStr)
         elif rx[0:4] == 'TIME':
             currentCall.datetime += 'T' + rx[-6:-2]
-        # TODO: refactor to be more generic
-        # This works with Hillsborough CenturyLink CID.
-        #elif rx[0:4] == 'DDN_':
-        #    currentCall.number = screendoor.canonicalize(rx[10:-2])
-        # This works with phone line simulator.
+        elif rx[0:4] == 'DDN_':
+            currentCall.number = screendoor.canonicalize(rx[10:-2])
         elif rx[0:4] == 'NMBR':
             currentCall.number = screendoor.canonicalize(rx[7:-2])
         elif rx[0:4] == 'NAME':
             if rx[7:-2] != 'O': currentCall.name = rx[7:-2]
             else: currentCall.name = 'Unknown name'
-            # this goes under NMBR when CenturyLink is in use
+        if currentCall.isFull():
             state = 'wait_decision'
             logger.info('Call received from ' + currentCall.number)
             logger.debug('Waiting for decision...')
@@ -89,9 +87,25 @@ def modem_process(pipe):
                 
                 # call has been hung up, return to idle
                 logger.debug('Hangup complete, return to idle')
+                relay.set_telephone_out_relay_pin(False)
                 currentCall = None
                 state = 'idle'
-            # this is a quick hack to circumvent some fragility and prepare for CDR. need a better way.
+            if cmd == 'ans_machine':
+                logger.debug('Waiting for RINGs to end...')
+                last_ring_time = datetime.now()
+                modem.timeout = 5
+                while (datetime.now() - last_ring_time).total_seconds() < 5: # wait for no RINGs in the last 5 seconds
+                    resp = modem.readline()
+                    if resp == 'RING\r\n':
+                        last_ring_time = datetime.now()
+                
+                # RINGs have ended, reconnect telephone out and return to idle
+                logger.debug('RINGs have ended, reconnect telephone out and return to idle')
+                relay.set_telephone_out_relay_pin(False)
+                modem.timeout = None
+                currentCall = None
+                state = 'idle'
+            # this is a quick hack to circumvent some fragility. need a better way.
             elif cmd == 'pass':
                 logger.debug('Returning to wait state...')
                 currentCall = None
